@@ -10,9 +10,9 @@ Projekt w zamyśle ma mieć 4 tryby:
 
 Zakres projektu
     Wymagania projektowe:
-    Budowa pojazdu z wykorzystaniem wybranych technik. √
-    Opracowanie aplikacji na mikrokontroler STM32 umożliwiającej sterowanie pojazdem. √
-    Opracowanie algorytmu śledzenia linii. √
-    Implementacja jednej z dwóch funkcjonalności: 
-    Zdalne sterowanie pojazdem z aplikacji mobilnej. √
-    Wykrywanie i omijanie przeszkód typu: ściana, cegła. √
+      1. Budowa pojazdu z wykorzystaniem wybranych technik. √
+      2. Opracowanie aplikacji na mikrokontroler STM32 umożliwiającej sterowanie pojazdem. √
+      3. Opracowanie algorytmu śledzenia linii. √
+      4.Implementacja jednej z dwóch funkcjonalności: 
+        4.1 Zdalne sterowanie pojazdem z aplikacji mobilnej. √
+        4.2 Wykrywanie i omijanie przeszkód typu: ściana, cegła. √
