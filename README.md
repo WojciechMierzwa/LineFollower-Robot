@@ -9,10 +9,10 @@ Projekt w zamyśle ma mieć 4 tryby:
   4. Zdalne kierowanie pojazdem za pomocą modułu bluetooth, ale pojazd zatrzymuje się przed kolizją
 
 Zakres projektu
-    Wymagania projektowe:
-      1. Budowa pojazdu z wykorzystaniem wybranych technik. √
-      2. Opracowanie aplikacji na mikrokontroler STM32 umożliwiającej sterowanie pojazdem. √
-      3. Opracowanie algorytmu śledzenia linii. √
-      4.Implementacja jednej z dwóch funkcjonalności: 
-        4.1 Zdalne sterowanie pojazdem z aplikacji mobilnej. √
-        4.2 Wykrywanie i omijanie przeszkód typu: ściana, cegła. √
+Wymagania projektowe:
+  1. Budowa pojazdu z wykorzystaniem wybranych technik. √
+  2. Opracowanie aplikacji na mikrokontroler STM32 umożliwiającej sterowanie pojazdem. √
+  3. Opracowanie algorytmu śledzenia linii. √
+  4.Implementacja jednej z dwóch funkcjonalności:
+    4.1 Zdalne sterowanie pojazdem z aplikacji mobilnej. √
+    4.2 Wykrywanie i omijanie przeszkód typu: ściana, cegła. √
