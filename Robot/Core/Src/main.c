@@ -18,12 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <stdio.h>
-#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,6 +41,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -52,15 +52,14 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void detect(uint8_t *detect_states);
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-
+uint8_t rxData;
 /* USER CODE END 0 */
 
 /**
@@ -69,6 +68,7 @@ void detect(uint8_t *detect_states);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 	uint8_t detect_states[5];
   /* USER CODE END 1 */
@@ -92,8 +92,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&huart1,&rxData,1); // uruchomienie obsługi uart dla bluetooth hc-06
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -101,37 +102,31 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-
-
-	  /*
 	  detect(detect_states); //fragment kodu do wykrywania linii
 
 
-	          for (int i = 0; i < 5; i++)
-	          {
-	              if (detect_states[i] == GPIO_PIN_SET)
-	              {
-	                  char message[50];
-	                  snprintf(message, sizeof(message), "Wykryto linię %d\r\n", i + 1);
+	  	  	          for (int i = 0; i < 5; i++)
+	  	  	          {
+	  	  	              if (detect_states[i] == GPIO_PIN_SET)
+	  	  	              {
+	  	  	                  char message[50];
+	  	  	                  snprintf(message, sizeof(message), "Wykryto linię %d\r\n", i + 1);
 
-	                  // Wyślij wiadomość przez interfejs UART
-	                  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
-	              }
-	              else
-	              {
-	                  char message[50];
-	                  snprintf(message, sizeof(message), "Nie wykryto linii %d\r\n", i + 1);
-	                  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
-	              }
-	          }
-	          HAL_Delay(1000);
-	      }/*
-
-  }
+	  	  	                  // Wyślij wiadomość przez interfejs UART
+	  	  	                  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+	  	  	              }
+	  	  	              else
+	  	  	              {
+	  	  	                  char message[50];
+	  	  	                  snprintf(message, sizeof(message), "Nie wykryto linii %d\r\n", i + 1);
+	  	  	                  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+	  	  	              }
+	  	  	          }
+	  	  	          HAL_Delay(1000);
+	  	  	      }
+    /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
-
+}
 
 /**
   * @brief System Clock Configuration
@@ -141,6 +136,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -169,6 +165,47 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
 }
 
 /**
@@ -187,7 +224,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -262,7 +299,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 void detect(uint8_t *detect_states) { //wykrywanie linii
     detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
     detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
@@ -271,6 +307,21 @@ void detect(uint8_t *detect_states) { //wykrywanie linii
     detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) // funkcja do obsługi bt po uart na podstawie przerwania
+{
+  if(huart->Instance==USART1)
+  {
+    if(rxData==78) // Ascii value of 'N' is 78 (N for NO)
+    {
+    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
+    }
+    else if (rxData==89) // Ascii value of 'Y' is 89 (Y for YES)
+    {
+    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+    }
+    HAL_UART_Receive_IT(&huart1,&rxData,1);
+  }
+}
 /* USER CODE END 4 */
 
 /**
