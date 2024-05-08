@@ -42,10 +42,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-
 
 /* USER CODE BEGIN PV */
 /*Variables for object detection*/
@@ -62,9 +62,25 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 void detect(uint8_t *detect_states);
 void detectObstacle(void);
+
+#define TIM_NO htim16
+#define TIM_CH_NO TIM_CHANNEL_1
+
+/* zakresy katowe pracy serwomechanizmu */
+#define ANGLE_MIN 0
+#define ANGLE_MAX 900
+/* zakres PWM */
+#define PWM_MIN 1100
+#define PWM_MAX 2050
+
+#define STEP ((1000 * (PWM_MAX - PWM_MIN)) / (ANGLE_MAX - ANGLE_MIN))
+
+void set_ang(uint16_t ang, uint8_t mode);
+void turnover(uint16_t *axle,char receivedChar);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,20 +120,26 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart1,&rxData,1); // uruchomienie obsługi uart dla bluetooth hc-06
   HAL_TIM_Base_Start(&htim1);
   HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+  char receivedChar;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  set_ang(0, 0);
+  uint16_t axle=0;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  detectObstacle();
+	  //detectObstacle();
+	  turnover(&axle, receivedChar);
   }
   /* USER CODE END 3 */
 }
@@ -160,9 +182,11 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_TIM1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_TIM1
+                              |RCC_PERIPHCLK_TIM16;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
   PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_HCLK;
+  PeriphClkInit.Tim16ClockSelection = RCC_TIM16CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -217,6 +241,69 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM16 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM16_Init(void)
+{
+
+  /* USER CODE BEGIN TIM16_Init 0 */
+
+  /* USER CODE END TIM16_Init 0 */
+
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM16_Init 1 */
+
+  /* USER CODE END TIM16_Init 1 */
+  htim16.Instance = TIM16;
+  htim16.Init.Prescaler = 71;
+  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim16.Init.Period = 19999;
+  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim16.Init.RepetitionCounter = 0;
+  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim16, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.BreakFilter = 0;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim16, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM16_Init 2 */
+
+  /* USER CODE END TIM16_Init 2 */
+  HAL_TIM_MspPostInit(&htim16);
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -267,7 +354,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 38400;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -410,6 +497,105 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) // funkcja do obsługi b
     HAL_UART_Receive_IT(&huart1,&rxData,1);
   }
 }
+void turnover(uint16_t *axle, char receivedChar){
+	while ((*axle)> 0)
+		  {
+		      // Sprawdzenie dostępności danych w strumieniu UART
+		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
+		      {
+		          // Obsługa odebranego znaku
+		          if (receivedChar == 'a')
+		          {
+		              // Przerwanie pętli i obsługa znaku 'a'
+		              break;
+		          }
+		          if(receivedChar == 'd');
+		          else{
+		        	  goto hell;
+		          }
+		      }
+		      // Aktualizacja wartości axle
+		      (*axle)--;
+		      set_ang(*axle, 0);
+		      HAL_Delay(0.1);
+		  }
+
+		  // Pętla zwiększająca wartość axle
+		  while ((*axle) < 900)
+		  {
+		      // Sprawdzenie dostępności danych w strumieniu UART
+		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
+		      {
+		          // Obsługa odebranego znaku
+		          if (receivedChar == 'd')
+		          {
+		              // Przerwanie pętli i obsługa znaku 'd'
+		              break;
+		          }
+		          if(receivedChar == 'a');
+		          else{
+		        	  goto hell;
+		          }
+		      }
+		      // Aktualizacja wartości axle
+		      (*axle)++;
+		      set_ang(*axle, 0);
+		      HAL_Delay(0.1);
+		  }
+
+		  // Pętla ustawiająca wartość axle na 450
+		  while ((*axle) != 450)
+		  {
+		      // Sprawdzenie dostępności danych w strumieniu UART
+		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
+		      {
+		          // Obsługa odebranego znaku
+		          if (receivedChar == 'a' || receivedChar == 'd')
+		          {
+		              // Przerwanie pętli i obsługa znaku 'a' lub 'd'
+		              break;
+		          }
+		      }
+		      // Aktualizacja wartości axle
+		      if ((*axle) < 450)
+		      {
+		          (*axle)++;
+		      }
+		      if ((*axle) > 450)
+		      {
+		          (*axle)--;
+		      }
+		      set_ang(*axle, 0);
+		      HAL_Delay(0.1);
+
+		      hell: set_ang(450, 0);
+		  }
+}
+void set_ang(uint16_t ang, uint8_t mode)
+{
+	uint16_t val;
+
+	if(ang > ANGLE_MAX)
+	{
+		ang = ANGLE_MAX;
+	}
+	else if (ang < ANGLE_MIN)
+	{
+		ang = ANGLE_MIN;
+	}
+
+	if(mode)
+	{
+		val = PWM_MIN + ((ang - ANGLE_MIN) * STEP) / 1000;
+	}
+	else
+	{
+		val = PWM_MAX - ((ang - ANGLE_MIN) * STEP) / 1000;
+	}
+
+	__HAL_TIM_SET_COMPARE(&TIM_NO, TIM_CH_NO, val);
+}
+
 /* USER CODE END 4 */
 
 /**
