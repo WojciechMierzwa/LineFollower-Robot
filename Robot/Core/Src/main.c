@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -67,11 +69,19 @@ static void MX_TIM16_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void detect(uint8_t *detect_states);
-void detectObstacle(void);
+int detectObstacle(void);
 void motor_forward(uint32_t duty_cycle);
 void motor_backward(uint32_t duty_cycle);
 void motor_stop(void);
 
+
+/*display*/
+void display_reset(void);
+void display1(void);
+void display2(void);
+void display3(void);
+void display4(void);
+void countdown(void);
 
 
 #define TIM_NO htim16
@@ -149,18 +159,117 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //set_ang(0, 0);
 
+  uint16_t counter=1;
+  uint16_t distance;
+
+  /**/
+  uint8_t random_number;
+  srand(time(NULL));
+
 
   while (1)
   {
+
+	  if(counter>4){
+	  	        	counter=1;
+	  	        }
+	  if (HAL_GPIO_ReadPin(ButtonExt_GPIO_Port, ButtonExt_Pin) == GPIO_PIN_SET)
+	      {
+	        // If the button is pressed, increment the counter
+	        counter++;
+	        HAL_Delay(500);
+
+	      }
+
+	  	  display_reset();
+	      // Perform different actions based on the counter value
+	      switch (counter)
+	      {
+	      case 1:
+	        display_reset();
+	        display1();
+	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	        	      {
+	        	        // If the button is pressed, increment the counter
+	        	        countdown();
+	        	        while(1){
+	        	        	/*line follower case 1*/
+
+	        	        	 	 	 detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	        	        		      detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	        	        		      detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	        	        		      detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	        	        		      detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+	        	        		  if(detect_states[2]==0)
+	        	        		  		  	  {
+
+	        	        		  		  		motor_forward(cycle);
+	        	        		  		  	  }
+	        	        		  		  	  else{
+	        	        		  		  		  if(detect_states[1]==0 || detect_states[0]==0){
+	        	        		  		  			motor_right(cycle);
+	        	        		  		  		  }
+	        	        		  		  		  else if(detect_states[3]==0 || detect_states[4]==0){
+	        	        		  		  			motor_left(cycle);
+	        	        		  		  		  		  }
+	        	        		  		  		  else{
+	        	        		  		  			motor_backward(cycle);
+	        	        		  		  		  }
+
+	        	        }
+
+	        	      }
+	        	      }
+
+	        break;
+	      case 2:
+	        display_reset();
+	        display2();
+	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
+	        	countdown();
+	        	display_reset();
+	        	while(1){
+	        		Distance=detectObstacle();
+	        		random_number = rand()%2;
+	        		motor_forward(cycle);
+
+	        		while(Distance<10){
+	        			if(Distance<5){
+	        				do{
+	        					motor_backward(cycle);
+	        				}while(Distance<15);
+	        			}
+	        			if(random_number==0){
+	        				motor_left(cycle);
+	        			}
+	        			else{
+	        				motor_right(cycle);
+	        			}
+
+	        		}
+	        	}
+	        }
+	        break;
+	      case 3:
+	        display_reset();
+	        display3();
+	        break;
+	      case 4:
+	        display_reset();
+	        display4();
+	        break;
+	      default:
+	        // Do nothing for other counter values
+	        break;
+	      }
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 	  //HAL_UART_Receive(&huart2, &receivedChar,1 ,HAL_MAX_DELAY);
-	  detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
-	      detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
-	      detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
-	      detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
-	      detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+
 
 	/*	  	  if(detect_states[2]==0)
 		  	  {
@@ -203,32 +312,17 @@ int main(void)
 		  	  	  	  	  	      }
 	  }*/
 
-	  if(detect_states[2]==0)
-	  		  	  {
-
-	  		  		motor_forward(cycle);
-	  		  	  }
-	  		  	  else{
-	  		  		  if(detect_states[1]==0 || detect_states[0]==0){
-	  		  			motor_right(cycle);
-	  		  		  }
-	  		  		  else if(detect_states[3]==0 || detect_states[4]==0){
-	  		  			motor_left(cycle);
-	  		  		  		  }
-	  		  		  else{
-	  		  			motor_backward(cycle);
-	  		  		  }
 
 
 	  //detectObstacle();
 	  //turnover(&axle, receivedChar); - testy
 	  //detectMotor();
   }
-  }
-}
+
+
 
   /* USER CODE END 3 */
-
+}
 
 /**
   * @brief System Clock Configuration
@@ -567,13 +661,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, TRIGGER_Pin|C_Pin|B_Pin|A_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED1_Pin|LED2_Pin|E_Pin|D_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, G_Pin|F_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -587,26 +681,32 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TRIGGER_Pin */
-  GPIO_InitStruct.Pin = TRIGGER_Pin;
+  /*Configure GPIO pins : TRIGGER_Pin C_Pin B_Pin A_Pin */
+  GPIO_InitStruct.Pin = TRIGGER_Pin|C_Pin|B_Pin|A_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(TRIGGER_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED1_Pin */
-  GPIO_InitStruct.Pin = LED1_Pin;
+  /*Configure GPIO pins : LED1_Pin LED2_Pin E_Pin D_Pin */
+  GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin|E_Pin|D_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pins : ButtonExt_Pin DETECT4_Pin */
+  GPIO_InitStruct.Pin = ButtonExt_Pin|DETECT4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : G_Pin F_Pin LD2_Pin */
+  GPIO_InitStruct.Pin = G_Pin|F_Pin|LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : DETECT3_Pin */
   GPIO_InitStruct.Pin = DETECT3_Pin;
@@ -614,19 +714,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(DETECT3_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : DETECT4_Pin */
-  GPIO_InitStruct.Pin = DETECT4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(DETECT4_GPIO_Port, &GPIO_InitStruct);
-
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 
-void detectObstacle(void){
+int detectObstacle(void){
 	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
 	__HAL_TIM_SET_COUNTER(&htim1, 0);
 	while (__HAL_TIM_GET_COUNTER (&htim1) < 10);  // wait for 10 us
@@ -642,13 +736,15 @@ void detectObstacle(void){
 	Value2 = __HAL_TIM_GET_COUNTER (&htim1);
 
 	Distance = (Value2-Value1) /58;
-	HAL_Delay(50);
-	if(Distance<5){ //led turns on when object is closer than 5 cm
+	if(Distance<10){
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
 	}
 	else{
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 	}
+	return Distance;
 }
 
 
@@ -840,6 +936,61 @@ void motor_stop(void)
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
 }
+void display1(void){
+	HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+}
+void display2(void){
+	//2
+		  HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(E_GPIO_Port, E_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(D_GPIO_Port, D_Pin, GPIO_PIN_SET);
+
+}
+void display3(void){
+	//3
+		  HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_SET);
+		  	  HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_SET);
+		  	  HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
+		  	  HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+		  	  HAL_GPIO_WritePin(D_GPIO_Port, D_Pin, GPIO_PIN_SET);
+}
+void display4(void){
+	//4
+		  	HAL_GPIO_WritePin(F_GPIO_Port, F_Pin, GPIO_PIN_SET);
+		  	HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
+		  	HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_SET);
+		  	HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+}
+void display_reset(void){
+	HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(D_GPIO_Port, D_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(E_GPIO_Port, E_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(F_GPIO_Port, F_Pin, GPIO_PIN_RESET);
+
+}
+
+void countdown(void){
+	display_reset();
+	display3();
+	HAL_Delay(1000);
+	display_reset();
+	display2();
+	HAL_Delay(1000);
+	display_reset();
+	display1();
+	HAL_Delay(1000);
+	display_reset();
+}
+
+
+
+
 
 /* USER CODE END 4 */
 
