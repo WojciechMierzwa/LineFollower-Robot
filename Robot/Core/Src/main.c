@@ -155,7 +155,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_UART_Receive(&huart2, &receivedChar,1 ,HAL_MAX_DELAY);
+	  //HAL_UART_Receive(&huart2, &receivedChar,1 ,HAL_MAX_DELAY);
+	  detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	      detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	      detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	      detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	      detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
 
 	/*	  	  if(detect_states[2]==0)
 		  	  {
@@ -174,7 +179,7 @@ int main(void)
 */
 
 
-		  	  	  if(receivedChar == 's')
+		  	  	 /* if(receivedChar == 's')
 		  	  	  	  	  	      {
 		  	  	  	  	  	    		  motor_backward(cycle);
 
@@ -196,12 +201,31 @@ int main(void)
 		  	  	  	  	  	      else if(receivedChar == 'q'){
 		  	  	  	  	  	    	  motor_stop();
 		  	  	  	  	  	      }
-	  }
+	  }*/
+
+	  if(detect_states[2]==0)
+	  		  	  {
+
+	  		  		motor_forward(cycle);
+	  		  	  }
+	  		  	  else{
+	  		  		  if(detect_states[1]==0 || detect_states[0]==0){
+	  		  			motor_right(cycle);
+	  		  		  }
+	  		  		  else if(detect_states[3]==0 || detect_states[4]==0){
+	  		  			motor_left(cycle);
+	  		  		  		  }
+	  		  		  else{
+	  		  			motor_backward(cycle);
+	  		  		  }
+
 
 	  //detectObstacle();
 	  //turnover(&axle, receivedChar); - testy
 	  //detectMotor();
   }
+  }
+}
 
   /* USER CODE END 3 */
 
@@ -601,13 +625,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void detect(uint8_t *detect_states) { //wykrywanie linii
-    detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
-    detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
-    detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
-    detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
-    detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
-}
+
 void detectObstacle(void){
 	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
 	__HAL_TIM_SET_COUNTER(&htim1, 0);
