@@ -73,6 +73,8 @@ int detectObstacle(void);
 void motor_forward(uint32_t duty_cycle);
 void motor_backward(uint32_t duty_cycle);
 void motor_stop(void);
+void motor_left(uint32_t duty_cycle);
+void motor_right(uint32_t duty_cycle);
 
 
 /*display*/
@@ -97,16 +99,16 @@ void countdown(void);
 #define STEP ((1000 * (PWM_MAX - PWM_MIN)) / (ANGLE_MAX - ANGLE_MIN))
 
 void set_ang(uint16_t ang, uint8_t mode);
-void turnover(uint16_t *axle,char receivedChar);
+void turnover(uint16_t *axle, uint8_t receivedChar);
 void detectMotor(void);
+void bluetooth(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t detect_states[5];
 uint16_t axle=0;
-uint8_t buttonPressed = 0;
-char receivedChar;
+uint8_t receivedChar;
 uint32_t cycle=32768;
 /* USER CODE END 0 */
 
@@ -145,7 +147,7 @@ int main(void)
   MX_TIM16_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart1,&receivedChar,1); // uruchomienie obsługi uart dla bluetooth hc-06
+
   HAL_TIM_Base_Start(&htim1);
   HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
@@ -154,7 +156,6 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //set_ang(0, 0);
@@ -166,9 +167,9 @@ int main(void)
   uint8_t random_number;
   srand(time(NULL));
 
-
   while (1)
   {
+	  bluetooth(); //  testowane bez trybu, wrzucilem do 3
 
 	  if(counter>4){
 	  	        	counter=1;
@@ -253,6 +254,7 @@ int main(void)
 	      case 3:
 	        display_reset();
 	        display3();
+	        bluetooth();
 	        break;
 	      case 4:
 	        display_reset();
@@ -748,46 +750,25 @@ int detectObstacle(void){
 }
 
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) // funkcja do obsługi bt po uart na podstawie przerwania
-{
-  if(huart->Instance==USART1)
-  {
-    if(receivedChar=='N')
-    {
-    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
-    }
-    else if (receivedChar=='Y')
-    {
-    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
-    }
-    HAL_UART_Receive_IT(&huart1,&receivedChar,1);
-  }
+void bluetooth(void) { // obsługa sterowania poprzez moduł bluetooth zs-040/hc-06
 
-  /*
-   * todo: nie dziala coś na przerwaniu chuja go wie dlaczego
-    if(huart->Instance==USART2){
-    	 if(receivedChar == 's')
-    		  	  	      {
-    		  	  	    		  motor_backward(32768);
-    		  	  	    		 	        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-    		  	  	    		 	        buttonPressed = 1;
-
-    		  	  	      }
-    		  	  	      else if (receivedChar == 'w')
-    		  	  	      {
-
-    		  	  	        motor_forward(32768);
-    		  	  	        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-    		  	  	        buttonPressed = 1;
-    		  	  	      }
-    		  	  	      else if(receivedChar == 'q'){
-    		  	  	    	  motor_stop();
-    		  	  	      }
+    if (HAL_UART_Receive(&huart1, &receivedChar, 1, 0) == HAL_OK) {
+        if (receivedChar == 's') {
+            motor_backward(cycle);
+        } else if (receivedChar == 'w') {
+            motor_forward(cycle);
+        } else if (receivedChar == 'a') {
+            motor_left(cycle);
+        } else if (receivedChar == 'd') {
+            motor_right(cycle);
+        } else if (receivedChar == 'q') {
+            motor_stop();
+        }
     }
-    HAL_UART_Receive_IT(&huart2,&receivedChar,1);
-*/
+    HAL_UART_Receive(&huart1, &receivedChar, 1,0);
 }
-void turnover(uint16_t *axle, char receivedChar){
+
+void turnover(uint16_t *axle, uint8_t receivedChar){
 	while ((*axle)> 0)
 		  {
 		      // Sprawdzenie dostępności danych w strumieniu UART
