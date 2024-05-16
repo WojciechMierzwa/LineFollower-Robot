@@ -230,24 +230,31 @@ int main(void)
 	        	countdown();
 	        	display_reset();
 	        	while(1){
-	        		Distance=detectObstacle();
-	        		random_number = rand()%2;
-	        		motor_forward(cycle);
+	        		  Distance = detectObstacle();
+	        		             random_number = rand() % 2;
+	        		             motor_forward(cycle);
 
-	        		while(Distance<10){
-	        			if(Distance<5){
-	        				do{
-	        					motor_backward(cycle);
-	        				}while(Distance<15);
-	        			}
-	        			if(random_number==0){
-	        				motor_left(cycle);
-	        			}
-	        			else{
-	        				motor_right(cycle);
-	        			}
+	        		             while(Distance < 10){
+	        		                 if(Distance < 5){
+	        		                     do{
+	        		                         motor_backward(cycle);
+	        		                         Distance = detectObstacle();
+	        		                     } while(Distance < 20);
+	        		                 }
+	        		                 if(Distance <= 15){
+	        		                     if(random_number == 0){
+	        		                         motor_left(cycle);
+	        		                     } else {
+	        		                         motor_right(cycle);
+	        		                     }
+	        		                 } else {
+	        		                     // Move forward if the distance is greater than 15 cm
+	        		                     motor_forward(cycle);
+	        		                 }
 
-	        		}
+	        		                 // Update distance for the next iteration
+	        		                 Distance = detectObstacle();
+	        		             }
 	        	}
 	        }
 	        break;
@@ -723,30 +730,30 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 int detectObstacle(void){
-	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
-	__HAL_TIM_SET_COUNTER(&htim1, 0);
-	while (__HAL_TIM_GET_COUNTER (&htim1) < 10);  // wait for 10 us
-	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
-	pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
-	// wait for the echo pin to go high
-	while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
-	Value1 = __HAL_TIM_GET_COUNTER (&htim1);
+	int samples[NUM_SAMPLES];
+	int totalDistance = 0;
+	for (int i = 0; i < NUM_SAMPLES; i++) {
+    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+    __HAL_TIM_SET_COUNTER(&htim16, 0);
+    while (__HAL_TIM_GET_COUNTER (&htim16) < 10);  // wait for 10 us
+    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
+    pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
+    // wait for the echo pin to go high
+    while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
+    Value1 = __HAL_TIM_GET_COUNTER (&htim16);
 
-	pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
-	// wait for the echo pin to go low
-	while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
-	Value2 = __HAL_TIM_GET_COUNTER (&htim1);
+    pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
+    // wait for the echo pin to go low
+    while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
+    Value2 = __HAL_TIM_GET_COUNTER (&htim16);
 
-	Distance = (Value2-Value1) /58;
-	if(Distance<10){
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+    samples[i] = (Value2-Value1) /58;
+
 	}
-	else{
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-	}
-	return Distance;
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+            totalDistance += samples[i];
+        }
+    return (totalDistance/NUM_SAMPLES)*2;
 }
 
 
