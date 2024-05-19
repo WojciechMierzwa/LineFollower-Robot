@@ -73,6 +73,8 @@ int detectObstacle(void);
 void motor_forward(uint32_t duty_cycle);
 void motor_backward(uint32_t duty_cycle);
 void motor_stop(void);
+void motor_left(uint32_t duty_cycle);
+void motor_right(uint32_t duty_cycle);
 
 
 /*display*/
@@ -93,20 +95,20 @@ void countdown(void);
 /* zakres PWM */
 #define PWM_MIN 1100
 #define PWM_MAX 2050
-
+#define NUM_SAMPLES 10
 #define STEP ((1000 * (PWM_MAX - PWM_MIN)) / (ANGLE_MAX - ANGLE_MIN))
 
 void set_ang(uint16_t ang, uint8_t mode);
-void turnover(uint16_t *axle,char receivedChar);
+void turnover(uint16_t *axle, uint8_t receivedChar);
 void detectMotor(void);
+void bluetooth(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t detect_states[5];
 uint16_t axle=0;
-uint8_t buttonPressed = 0;
-char receivedChar;
+uint8_t receivedChar;
 uint32_t cycle=32768;
 /* USER CODE END 0 */
 
@@ -145,7 +147,7 @@ int main(void)
   MX_TIM16_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart1,&receivedChar,1); // uruchomienie obsługi uart dla bluetooth hc-06
+
   HAL_TIM_Base_Start(&htim1);
   HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
   HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
@@ -154,7 +156,6 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //set_ang(0, 0);
@@ -165,7 +166,6 @@ int main(void)
   /**/
   uint8_t random_number;
   srand(time(NULL));
-
 
   while (1)
   {
@@ -229,30 +229,40 @@ int main(void)
 	        	countdown();
 	        	display_reset();
 	        	while(1){
-	        		Distance=detectObstacle();
-	        		random_number = rand()%2;
-	        		motor_forward(cycle);
+	        		  Distance = detectObstacle();
+	        		             random_number = rand() % 2;
+	        		             motor_forward(cycle);
 
-	        		while(Distance<10){
-	        			if(Distance<5){
-	        				do{
-	        					motor_backward(cycle);
-	        				}while(Distance<15);
-	        			}
-	        			if(random_number==0){
-	        				motor_left(cycle);
-	        			}
-	        			else{
-	        				motor_right(cycle);
-	        			}
+	        		             while(Distance < 10){
+	        		                 if(Distance < 5){
+	        		                     do{
+	        		                         motor_backward(cycle);
+	        		                         Distance = detectObstacle();
+	        		                     } while(Distance < 20);
+	        		                 }
+	        		                 if(Distance <= 15){
+	        		                     if(random_number == 0){
+	        		                         motor_left(cycle);
+	        		                     } else {
+	        		                         motor_right(cycle);
+	        		                     }
+	        		                 } else {
+	        		                     // Move forward if the distance is greater than 15 cm
+	        		                     motor_forward(cycle);
+	        		                 }
 
-	        		}
+	        		                 // Update distance for the next iteration
+	        		                 Distance = detectObstacle();
+	        		             }
 	        	}
 	        }
 	        break;
 	      case 3:
 	        display_reset();
 	        display3();
+	        while(1){
+	        	bluetooth();
+	        }
 	        break;
 	      case 4:
 	        display_reset();
@@ -721,73 +731,60 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 int detectObstacle(void){
-	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
-	__HAL_TIM_SET_COUNTER(&htim1, 0);
-	while (__HAL_TIM_GET_COUNTER (&htim1) < 10);  // wait for 10 us
-	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
-	pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
-	// wait for the echo pin to go high
-	while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
-	Value1 = __HAL_TIM_GET_COUNTER (&htim1);
+	int samples[NUM_SAMPLES];
+	int totalDistance = 0;
+	for (int i = 0; i < NUM_SAMPLES; i++) {
+    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+    __HAL_TIM_SET_COUNTER(&htim16, 0);
+    while (__HAL_TIM_GET_COUNTER (&htim16) < 10);  // wait for 10 us
+    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
+    pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
+    // wait for the echo pin to go high
+    while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
+    Value1 = __HAL_TIM_GET_COUNTER (&htim16);
 
-	pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
-	// wait for the echo pin to go low
-	while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
-	Value2 = __HAL_TIM_GET_COUNTER (&htim1);
+    pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
+    // wait for the echo pin to go low
+    while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
+    Value2 = __HAL_TIM_GET_COUNTER (&htim16);
 
-	Distance = (Value2-Value1) /58;
-	if(Distance<10){
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+    samples[i] = (Value2-Value1) /58;
+
 	}
-	else{
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-	}
-	return Distance;
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+            totalDistance += samples[i];
+        }
+    if((totalDistance/NUM_SAMPLES)*2<10){
+    		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+    		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+    	}
+    	else{
+    		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+    		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+    	}
+    return (totalDistance/NUM_SAMPLES)*2;
 }
 
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) // funkcja do obsługi bt po uart na podstawie przerwania
-{
-  if(huart->Instance==USART1)
-  {
-    if(receivedChar=='N')
-    {
-    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
-    }
-    else if (receivedChar=='Y')
-    {
-    	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
-    }
-    HAL_UART_Receive_IT(&huart1,&receivedChar,1);
-  }
+void bluetooth(void) { // obsługa sterowania poprzez moduł bluetooth zs-040/hc-06
 
-  /*
-   * todo: nie dziala coś na przerwaniu chuja go wie dlaczego
-    if(huart->Instance==USART2){
-    	 if(receivedChar == 's')
-    		  	  	      {
-    		  	  	    		  motor_backward(32768);
-    		  	  	    		 	        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-    		  	  	    		 	        buttonPressed = 1;
-
-    		  	  	      }
-    		  	  	      else if (receivedChar == 'w')
-    		  	  	      {
-
-    		  	  	        motor_forward(32768);
-    		  	  	        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-    		  	  	        buttonPressed = 1;
-    		  	  	      }
-    		  	  	      else if(receivedChar == 'q'){
-    		  	  	    	  motor_stop();
-    		  	  	      }
+    if (HAL_UART_Receive(&huart1, &receivedChar, 1, 0) == HAL_OK) {
+        if (receivedChar == 's') {
+            motor_backward(cycle);
+        } else if (receivedChar == 'w') {
+            motor_forward(cycle);
+        } else if (receivedChar == 'a') {
+            motor_left(cycle);
+        } else if (receivedChar == 'd') {
+            motor_right(cycle);
+        } else if (receivedChar == 'q') {
+            motor_stop();
+        }
     }
-    HAL_UART_Receive_IT(&huart2,&receivedChar,1);
-*/
+    HAL_UART_Receive(&huart1, &receivedChar, 1,0);
 }
-void turnover(uint16_t *axle, char receivedChar){
+
+void turnover(uint16_t *axle, uint8_t receivedChar){
 	while ((*axle)> 0)
 		  {
 		      // Sprawdzenie dostępności danych w strumieniu UART
