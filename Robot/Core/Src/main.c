@@ -46,6 +46,7 @@
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim16;
+TIM_HandleTypeDef htim17;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -67,9 +68,10 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM16_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM17_Init(void);
 /* USER CODE BEGIN PFP */
 void detect(uint8_t *detect_states);
-int detectObstacle(void);
+void detectObstacle(void);
 void motor_forward(uint32_t duty_cycle);
 void motor_backward(uint32_t duty_cycle);
 void motor_stop(void);
@@ -146,6 +148,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM16_Init();
   MX_TIM2_Init();
+  MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start(&htim1);
@@ -156,181 +159,120 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //set_ang(0, 0);
 
   uint16_t counter=1;
   uint16_t distance;
+  set_ang(450, 0);
+
 
   /**/
-  uint8_t random_number;
+
   srand(time(NULL));
 
   while (1)
   {
 
-	  if(counter>4){
-	  	        	counter=1;
-	  	        }
-	  if (HAL_GPIO_ReadPin(ButtonExt_GPIO_Port, ButtonExt_Pin) == GPIO_PIN_SET)
-	      {
-	        // If the button is pressed, increment the counter
-	        counter++;
-	        HAL_Delay(500);
-
-	      }
-
-	  	  display_reset();
-	      // Perform different actions based on the counter value
-	      switch (counter)
-	      {
-	      case 1:
-	        display_reset();
-	        display1();
-	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
-	        	      {
-	        	        // If the button is pressed, increment the counter
-	        	        countdown();
-	        	        while(1){
-	        	        	/*line follower case 1*/
-
-	        	        	 	 	 detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
-	        	        		      detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
-	        	        		      detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
-	        	        		      detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
-	        	        		      detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
-	        	        		  if(detect_states[2]==0)
-	        	        		  		  	  {
-
-	        	        		  		  		motor_forward(cycle);
-	        	        		  		  	  }
-	        	        		  		  	  else{
-	        	        		  		  		  if(detect_states[1]==0 || detect_states[0]==0){
-	        	        		  		  			motor_right(cycle);
-	        	        		  		  		  }
-	        	        		  		  		  else if(detect_states[3]==0 || detect_states[4]==0){
-	        	        		  		  			motor_left(cycle);
-	        	        		  		  		  		  }
-	        	        		  		  		  else{
-	        	        		  		  			motor_backward(cycle);
-	        	        		  		  		  }
-
-	        	        }
-
-	        	      }
-	        	      }
-
-	        break;
-	      case 2:
-	        display_reset();
-	        display2();
-	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
-	        	countdown();
-	        	display_reset();
-	        	while(1){
-	        		  Distance = detectObstacle();
-	        		             random_number = rand() % 2;
-	        		             motor_forward(cycle);
-
-	        		             while(Distance < 10){
-	        		                 if(Distance < 5){
-	        		                     do{
-	        		                         motor_backward(cycle);
-	        		                         Distance = detectObstacle();
-	        		                     } while(Distance < 20);
-	        		                 }
-	        		                 if(Distance <= 15){
-	        		                     if(random_number == 0){
-	        		                         motor_left(cycle);
-	        		                     } else {
-	        		                         motor_right(cycle);
-	        		                     }
-	        		                 } else {
-	        		                     // Move forward if the distance is greater than 15 cm
-	        		                     motor_forward(cycle);
-	        		                 }
-
-	        		                 // Update distance for the next iteration
-	        		                 Distance = detectObstacle();
-	        		             }
-	        	}
-	        }
-	        break;
-	      case 3:
-	        display_reset();
-	        display3();
-	        while(1){
-	        	bluetooth();
-	        }
-	        break;
-	      case 4:
-	        display_reset();
-	        display4();
-	        break;
-	      default:
-	        // Do nothing for other counter values
-	        break;
-	      }
-
-
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  //HAL_UART_Receive(&huart2, &receivedChar,1 ,HAL_MAX_DELAY);
+	  if(counter>3){
+	  	  	        	counter=1;
+	  	  	        }
+	  	  if (HAL_GPIO_ReadPin(ButtonExt_GPIO_Port, ButtonExt_Pin) == GPIO_PIN_SET)
+	  	      {
+	  	        counter++;
+	  	        HAL_Delay(500);
 
+	  	      }
 
-	/*	  	  if(detect_states[2]==0)
-		  	  {
-		  		  receivedChar='w';
-		  	  }
-		  	  else{
-		  		  if(detect_states[1]==0 || detect_states[0]==0){
-		  			  receivedChar='a';
-		  		  }
-		  		  else if(detect_states[3]==0 || detect_states[4]==0){
-		  		  			  receivedChar='d';
-		  		  		  }
-		  		  else{
-		  			  receivedChar='s';
-		  		  }
-*/
+	  	  	  display_reset();
+	  	      switch (counter)
+	  	      {
+	  	      case 1:
+	  	        display_reset();
+	  	        display1();
+	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  	        {
+	  	        	//linefollower
+	  	        	countdown();
+	  	        	while(1){
+	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
 
-
-		  	  	 /* if(receivedChar == 's')
-		  	  	  	  	  	      {
-		  	  	  	  	  	    		  motor_backward(cycle);
-
-
-		  	  	  	  	  	      }
-		  	  	  	  	  	      else if (receivedChar == 'w')
-		  	  	  	  	  	      {
-
-		  	  	  	  	  	        motor_forward(cycle);
-		  	  	  	  	  	        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-		  	  	  	  	  	        buttonPressed = 1;
-		  	  	  	  	  	      }
-		  	  	  	  	  	      else if(receivedChar == 'a'){
-		  	  	  	  	  	    	  motor_left(cycle);
-		  	  	  	  	  	      }
-		  	  	  	  	  	      else if(receivedChar == 'd'){
-		  	  	  	  	  	    		  motor_right(cycle);
-		  	  	  	  	  	      }
-		  	  	  	  	  	      else if(receivedChar == 'q'){
-		  	  	  	  	  	    	  motor_stop();
-		  	  	  	  	  	      }
-	  }*/
-
-
-
-	  //detectObstacle();
-	  //turnover(&axle, receivedChar); - testy
-	  //detectMotor();
+	  	        		if(detect_states[2]==0)
+	  	        		{
+	  	        			motor_forward(cycle);
+	  	        		}
+	  	        		else{
+	  	        			if(detect_states[1]==0 || detect_states[0]==0)
+	  	        			{
+	  	        				motor_left(cycle);
+	  	        				set_ang(900, 0);
+	  	        			}
+	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
+	  	        				motor_right(cycle);
+	  	        				set_ang(0, 0);
+	  	        			}
+	  	        			else{
+	  	        				motor_backward(cycle);
+	  	        				set_ang(450, 0);
+	  	        			}
+	  	        		}
+	  	        	}
+	  	        }
+	  	        break;
+	  	      case 2:
+	  	    	  //sterowanie bluetoothem
+	  	    	display_reset();
+	  	    	display2();
+	  	    	if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
+	  	    		countdown();
+	  	    		display_reset();
+	  	    		while(1){
+	  	    			bluetooth();
+	  	    		}
+	  	    	}
+	  	        break;
+	  	      case 3:
+	  	    	//sterowanie po kablu
+	  	    	display_reset();
+	  	    	display3();
+	  	    	if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
+	  	    		countdown();
+	  	    		display_reset();
+	  	    		while(1){
+	  	    			if(HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK) {
+	  	    				if (receivedChar == 's') {
+	  	    					set_ang(450, 0);
+	  	    					motor_backward(cycle);
+	  	    				} else if (receivedChar == 'w') {
+	  	    					set_ang(450, 0);
+	  	    					motor_forward(cycle);
+	  	    				} else if (receivedChar == 'a') {
+	  	    					set_ang(900, 0);
+	  	    					motor_left(cycle);
+	  	    				} else if (receivedChar == 'd') {
+	  	    					set_ang(0, 0);
+	  	    					motor_right(cycle);
+	  	    				} else if (receivedChar == 'q') {
+	  	    					set_ang(450, 0);
+	  	    					motor_stop();
+	  	    				}
+	  	    				HAL_Delay(100);
+	  	    			}
+	  	    		}
+	  	    	}
+	  	        break;
+	  	      }
   }
-
-
-
   /* USER CODE END 3 */
 }
 
@@ -373,10 +315,11 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_TIM1
-                              |RCC_PERIPHCLK_TIM16;
+                              |RCC_PERIPHCLK_TIM16|RCC_PERIPHCLK_TIM17;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
   PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_HCLK;
   PeriphClkInit.Tim16ClockSelection = RCC_TIM16CLK_HCLK;
+  PeriphClkInit.Tim17ClockSelection = RCC_TIM17CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -584,6 +527,38 @@ static void MX_TIM16_Init(void)
 }
 
 /**
+  * @brief TIM17 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM17_Init(void)
+{
+
+  /* USER CODE BEGIN TIM17_Init 0 */
+
+  /* USER CODE END TIM17_Init 0 */
+
+  /* USER CODE BEGIN TIM17_Init 1 */
+
+  /* USER CODE END TIM17_Init 1 */
+  htim17.Instance = TIM17;
+  htim17.Init.Prescaler = 71;
+  htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim17.Init.Period = 65535;
+  htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim17.Init.RepetitionCounter = 0;
+  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM17_Init 2 */
+
+  /* USER CODE END TIM17_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -730,134 +705,59 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-int detectObstacle(void){
-	int samples[NUM_SAMPLES];
-	int totalDistance = 0;
-	for (int i = 0; i < NUM_SAMPLES; i++) {
-    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
-    __HAL_TIM_SET_COUNTER(&htim16, 0);
-    while (__HAL_TIM_GET_COUNTER (&htim16) < 10);  // wait for 10 us
-    HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
-    pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
-    // wait for the echo pin to go high
-    while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
-    Value1 = __HAL_TIM_GET_COUNTER (&htim16);
+void detectObstacle(void){
+	__HAL_TIM_SET_COUNTER(&htim1, 0);
+	while (__HAL_TIM_GET_COUNTER (&htim1) < 10);  // wait for 10 us
+	HAL_GPIO_WritePin(TRIGGER_GPIO_Port, TRIGGER_Pin, GPIO_PIN_RESET);  // pull the TRIG p
+	pMillis = HAL_GetTick(); // used this to avoid infinite while loop  (for timeout)
+	// wait for the echo pin to go high
+	while (!(HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 10 >  HAL_GetTick());
+	Value1 = __HAL_TIM_GET_COUNTER (&htim1);
 
-    pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
-    // wait for the echo pin to go low
-    while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
-    Value2 = __HAL_TIM_GET_COUNTER (&htim16);
+	pMillis = HAL_GetTick(); // used this to avoid infinite while loop (for timeout)
+	// wait for the echo pin to go low
+	while ((HAL_GPIO_ReadPin (ECHO_GPIO_Port, ECHO_Pin)) && pMillis + 50 > HAL_GetTick());
+	Value2 = __HAL_TIM_GET_COUNTER (&htim1);
 
-    samples[i] = (Value2-Value1) /58;
+	Distance = (Value2-Value1) /58;
+	HAL_Delay(50);
 
-	}
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-            totalDistance += samples[i];
-        }
-    if((totalDistance/NUM_SAMPLES)*2<10){
-    		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-    		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-    	}
-    	else{
-    		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-    		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-    	}
-    return (totalDistance/NUM_SAMPLES)*2;
 }
+
 
 
 void bluetooth(void) { // obsługa sterowania poprzez moduł bluetooth zs-040/hc-06
+	while(1){
 
-    if (HAL_UART_Receive(&huart1, &receivedChar, 1, 0) == HAL_OK) {
-        if (receivedChar == 's') {
-            motor_backward(cycle);
-        } else if (receivedChar == 'w') {
-            motor_forward(cycle);
-        } else if (receivedChar == 'a') {
-            motor_left(cycle);
-        } else if (receivedChar == 'd') {
-            motor_right(cycle);
-        } else if (receivedChar == 'q') {
-            motor_stop();
-        }
+		if(HAL_UART_Receive(&huart1, &receivedChar, 1, 100) == HAL_OK) {
+		        if (receivedChar == 's') {
+		        	display1();
+		        	set_ang(450, 0);
+		            motor_backward(cycle);
+		        } else if (receivedChar == 'w') {
+		        	display2();
+		        	set_ang(450, 0);
+		            motor_forward(cycle);
+		        } else if (receivedChar == 'a') {
+		        	set_ang(900, 0);
+		            motor_left(cycle);
+		        } else if (receivedChar == 'd') {
+		        	set_ang(0, 0);
+		            motor_right(cycle);
+		        } else if (receivedChar == 'q') {
+		        	set_ang(450, 0);
+		            motor_stop();
+		        }
+
+	}
+
+
+
     }
-    HAL_UART_Receive(&huart1, &receivedChar, 1,0);
+
 }
 
-void turnover(uint16_t *axle, uint8_t receivedChar){
-	while ((*axle)> 0)
-		  {
-		      // Sprawdzenie dostępności danych w strumieniu UART
-		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
-		      {
-		          // Obsługa odebranego znaku
-		          if (receivedChar == 'a')
-		          {
-		              // Przerwanie pętli i obsługa znaku 'a'
-		              break;
-		          }
-		          if(receivedChar == 'd');
-		          else{
-		        	  goto hell;
-		          }
-		      }
-		      // Aktualizacja wartości axle
-		      (*axle)--;
-		      set_ang(*axle, 0);
-		      HAL_Delay(0.1);
-		  }
 
-		  // Pętla zwiększająca wartość axle
-		  while ((*axle) < 900)
-		  {
-		      // Sprawdzenie dostępności danych w strumieniu UART
-		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
-		      {
-		          // Obsługa odebranego znaku
-		          if (receivedChar == 'd')
-		          {
-		              // Przerwanie pętli i obsługa znaku 'd'
-		              break;
-		          }
-		          if(receivedChar == 'a');
-		          else{
-		        	  goto hell;
-		          }
-		      }
-		      // Aktualizacja wartości axle
-		      (*axle)++;
-		      set_ang(*axle, 0);
-		      HAL_Delay(0.1);
-		  }
-
-		  // Pętla ustawiająca wartość axle na 450
-		  while ((*axle) != 450)
-		  {
-		      // Sprawdzenie dostępności danych w strumieniu UART
-		      if (HAL_UART_Receive(&huart2, &receivedChar, 1, 0) == HAL_OK)
-		      {
-		          // Obsługa odebranego znaku
-		          if (receivedChar == 'a' || receivedChar == 'd')
-		          {
-		              // Przerwanie pętli i obsługa znaku 'a' lub 'd'
-		              break;
-		          }
-		      }
-		      // Aktualizacja wartości axle
-		      if ((*axle) < 450)
-		      {
-		          (*axle)++;
-		      }
-		      if ((*axle) > 450)
-		      {
-		          (*axle)--;
-		      }
-		      set_ang(*axle, 0);
-		      HAL_Delay(0.1);
-
-		      hell: set_ang(450, 0);
-		  }
-}
 void set_ang(uint16_t ang, uint8_t mode)
 {
 	uint16_t val;
@@ -892,37 +792,36 @@ void detectMotor(void){ // obrot serva w zależności od detekcji
 
 void motor_forward(uint32_t duty_cycle)
 {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, duty_cycle*3/4);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, cycle);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, cycle/3);
 }
 void motor_left(uint32_t duty_cycle)
 {
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, duty_cycle/5);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, duty_cycle);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, duty_cycle);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, duty_cycle*2/3);
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
 }
 void motor_right(uint32_t duty_cycle)
 {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty_cycle*2/3);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, duty_cycle/5);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, duty_cycle);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
 }
 
 // Function to move motors backward
 void motor_backward(uint32_t duty_cycle)
 {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, duty_cycle);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, duty_cycle*3/4);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cycle);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, cycle/3);
+	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
+
 }
 
 // Function to stop motors
