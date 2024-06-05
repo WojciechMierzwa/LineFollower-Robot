@@ -109,6 +109,8 @@ void bluetooth(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t detect_states[5];
+uint8_t detect3L;
+uint8_t detect3P;
 uint16_t axle=0;
 uint8_t receivedChar;
 uint32_t cycle=32768;
@@ -206,6 +208,11 @@ int main(void)
 	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
 	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
 	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+
+	  	        		//pomoc dla lini nalezy dodac nowe if i dodac 2 funkcje slightleft slightright(funkjce zwiazane z motor)
+	  	        		detect3L=HAL_GPIO_ReadPin(DETECT3L_GPIO_Port, DETECT3L_Pin);
+	  	        		detect3P=HAL_GPIO_ReadPin(DETECT3P_GPIO_Port, DETECT3P_Pin);
+
 
 	  	        		if(detect_states[2]==0)
 	  	        		{
@@ -680,8 +687,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ButtonExt_Pin DETECT4_Pin */
-  GPIO_InitStruct.Pin = ButtonExt_Pin|DETECT4_Pin;
+  /*Configure GPIO pins : ButtonExt_Pin DETECT4_Pin DETECT3L_Pin DETECT3P_Pin */
+  GPIO_InitStruct.Pin = ButtonExt_Pin|DETECT4_Pin|DETECT3L_Pin|DETECT3P_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);

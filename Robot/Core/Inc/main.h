@@ -115,6 +115,10 @@ void Error_Handler(void);
 #define SWO_GPIO_Port GPIOB
 #define DETECT4_Pin GPIO_PIN_7
 #define DETECT4_GPIO_Port GPIOB
+#define DETECT3L_Pin GPIO_PIN_8
+#define DETECT3L_GPIO_Port GPIOB
+#define DETECT3P_Pin GPIO_PIN_9
+#define DETECT3P_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
