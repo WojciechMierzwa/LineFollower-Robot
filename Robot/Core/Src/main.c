@@ -85,6 +85,8 @@ void display1(void);
 void display2(void);
 void display3(void);
 void display4(void);
+void display5(void);
+void display6(void);
 void countdown(void);
 
 
@@ -200,7 +202,7 @@ int main(void)
 	  	        display1();
 	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
 	  	        {
-	  	        	//linefollower
+	  	        	//linefollower niezmodyfikowany nie widzi lini jedzie do tyłu
 	  	        	countdown();
 	  	        	while(1){
 	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
@@ -208,10 +210,6 @@ int main(void)
 	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
 	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
 	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
-
-	  	        		//pomoc dla lini nalezy dodac nowe if i dodac 2 funkcje slightleft slightright(funkjce zwiazane z motor)
-	  	        		detect3L=HAL_GPIO_ReadPin(DETECT3L_GPIO_Port, DETECT3L_Pin);
-	  	        		detect3P=HAL_GPIO_ReadPin(DETECT3P_GPIO_Port, DETECT3P_Pin);
 
 
 	  	        		if(detect_states[2]==0)
@@ -236,10 +234,123 @@ int main(void)
 	  	        	}
 	  	        }
 	  	        break;
-	  	      case 2:
+	  	    case 2:
+	  	    	  	        display_reset();
+	  	    	  	        display2();
+	  	    	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  	    	  	        {
+	  	    	  	        	//linefollower zmodyfikowany o 2 dodatkowe czujniki
+	  	    	  	        	countdown();
+	  	    	  	        	while(1){
+	  	    	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	  	    	  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	  	    	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	  	    	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	  	    	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+
+	  	    	  	        		//pomoc dla lini nalezy dodac nowe if i dodac 2 funkcje slightleft slightright(funkjce zwiazane z motor)
+	  	    	  	        		detect3L=HAL_GPIO_ReadPin(DETECT3L_GPIO_Port, DETECT3L_Pin);
+	  	    	  	        		detect3P=HAL_GPIO_ReadPin(DETECT3P_GPIO_Port, DETECT3P_Pin);
+
+
+	  	    	  	        		if(detect_states[2]==0)
+	  	    	  	        		{
+	  	    	  	        			motor_forward(cycle);
+	  	    	  	        		}
+	  	    	  	        		else{
+	  	    	  	        			if(detect_states[1]==0 || detect_states[0]==0)
+	  	    	  	        			{
+	  	    	  	        				motor_left(cycle);
+	  	    	  	        				set_ang(900, 0);
+	  	    	  	        			}
+	  	    	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
+	  	    	  	        				motor_right(cycle);
+	  	    	  	        				set_ang(0, 0);
+	  	    	  	        			}
+	  	    	  	        			else{
+	  	    	  	        				motor_backward(cycle);
+	  	    	  	        				set_ang(450, 0);
+	  	    	  	        			}
+	  	    	  	        		}
+	  	    	  	        	}
+	  	    	  	        }
+	  	    	  	        break;
+	  	  case 3:
+	  	  	  	        display_reset();
+	  	  	  	        display3();
+	  	  	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  	  	  	        {
+	  	  	  	        	//linefollower zmodyfikowany niewidzi linii jedzie w prawo
+	  	  	  	        	countdown();
+	  	  	  	        	while(1){
+	  	  	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	  	  	  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	  	  	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	  	  	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	  	  	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+
+	  	  	  	        		if(detect_states[2]==0)
+	  	  	  	        		{
+	  	  	  	        			motor_forward(cycle);
+	  	  	  	        		}
+	  	  	  	        		else{
+	  	  	  	        			if(detect_states[1]==0 || detect_states[0]==0)
+	  	  	  	        			{
+	  	  	  	        				motor_left(cycle);
+	  	  	  	        				set_ang(900, 0);
+	  	  	  	        			}
+	  	  	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
+	  	  	  	        				motor_right(cycle);
+	  	  	  	        				set_ang(0, 0);
+	  	  	  	        			}
+	  	  	  	        			else{
+	  	  	  	        			motor_left(cycle);
+	  	  	  	        			set_ang(900, 0);
+	  	  	  	        			}
+	  	  	  	        		}
+	  	  	  	        	}
+	  	  	  	        }
+	  	  	  	        break;
+	  	  	  	  	  case 4:
+	  		  	        display_reset();
+	  		  	        display4();
+	  		  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  		  	        {
+	  		  	        //linefollower zmodyfikowany niewidzi linii jedzie w lewo
+	  		  	        	countdown();
+	  		  	        	while(1){
+	  		  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	  		  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	  		  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	  		  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	  		  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+
+	  		  	        		if(detect_states[2]==0)
+	  		  	        		{
+	  		  	        			motor_forward(cycle);
+	  		  	        		}
+	  		  	        		else{
+	  		  	        			if(detect_states[1]==0 || detect_states[0]==0)
+	  		  	        			{
+	  		  	        				motor_left(cycle);
+	  		  	        				set_ang(900, 0);
+	  		  	        			}
+	  		  	        			else if(detect_states[3]==0 || detect_states[4]==0){
+	  		  	        				motor_right(cycle);
+	  		  	        				set_ang(0, 0);
+	  		  	        			}
+	  		  	        			else{
+	  		  	        				motor_right(cycle);
+	  		  	        				set_ang(0, 0);
+	  		  	        			}
+	  		  	        		}
+	  		  	        	}
+	  		  	        }
+	  		  	        break;
+	  	      case 5:
 	  	    	  //sterowanie bluetoothem
 	  	    	display_reset();
-	  	    	display2();
+	  	    	display5();
 	  	    	if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
 	  	    		countdown();
 	  	    		display_reset();
@@ -248,10 +359,10 @@ int main(void)
 	  	    		}
 	  	    	}
 	  	        break;
-	  	      case 3:
+	  	      case 6:
 	  	    	//sterowanie po kablu
 	  	    	display_reset();
-	  	    	display3();
+	  	    	display6();
 	  	    	if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET){
 	  	    		countdown();
 	  	    		display_reset();
@@ -866,6 +977,21 @@ void display4(void){
 		  	HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
 		  	HAL_GPIO_WritePin(B_GPIO_Port, B_Pin, GPIO_PIN_SET);
 		  	HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+}
+void display5(void){
+	HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(F_GPIO_Port, F_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(D_GPIO_Port, D_Pin, GPIO_PIN_SET);
+}
+void display6(void){
+	HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(F_GPIO_Port, F_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(G_GPIO_Port, G_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(E_GPIO_Port, E_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(C_GPIO_Port, C_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(D_GPIO_Port, D_Pin, GPIO_PIN_SET);
 }
 void display_reset(void){
 	HAL_GPIO_WritePin(A_GPIO_Port, A_Pin, GPIO_PIN_RESET);
