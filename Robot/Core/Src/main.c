@@ -104,6 +104,9 @@ void set_ang(uint16_t ang, uint8_t mode);
 void turnover(uint16_t *axle, uint8_t receivedChar);
 void detectMotor(void);
 void bluetooth(void);
+void motor_slight_right(uint32_t duty_cycle);
+void motor_slight_left(uint32_t duty_cycle);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -180,7 +183,6 @@ int main(void)
 
 
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
 	  if(counter>3){
 	  	  	        	counter=1;
@@ -227,6 +229,12 @@ int main(void)
 	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
 	  	        				motor_right(cycle);
 	  	        				set_ang(0, 0);
+	  	        			}
+	  	        			else if(detect3L==0 && (detect_states[1]==1 &&  detect_states[0]==1)){
+	  	        				motor_slight_left(cycle);
+	  	        			}
+	  	        			else if(detect3P==0 && (detect_states[3]==1 &&  detect_states[4]==1)){
+	  	        				motor_slight_right(cycle);
 	  	        			}
 	  	        			else{
 	  	        				motor_backward(cycle);
@@ -797,6 +805,23 @@ void detectMotor(void){ // obrot serva w zależności od detekcji
     (detect_states[2] != 0 && detect_states[3] != 0 && detect_states[4] != 0) ? turnover(&axle, 'd') : 0;
 }
 
+void motor_slight_left(uint32_t duty_cycle){
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, duty_cycle);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0.9*(duty_cycle*2/3));
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+
+}
+
+void motor_slight_right(uint32_t duty_cycle){
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0.9*(duty_cycle*2/3));
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, duty_cycle);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+}
+
 void motor_forward(uint32_t duty_cycle)
 {
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
@@ -890,10 +915,6 @@ void countdown(void){
 	HAL_Delay(1000);
 	display_reset();
 }
-
-
-
-
 
 /* USER CODE END 4 */
 
