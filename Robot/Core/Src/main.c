@@ -184,7 +184,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if(counter>3){
+	  if(counter>6){
 	  	  	        	counter=1;
 	  	  	        }
 	  	  if (HAL_GPIO_ReadPin(ButtonExt_GPIO_Port, ButtonExt_Pin) == GPIO_PIN_SET)
