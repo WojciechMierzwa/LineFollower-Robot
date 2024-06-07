@@ -235,46 +235,54 @@ int main(void)
 	  	        }
 	  	        break;
 	  	    case 2:
-	  	    	  	        display_reset();
-	  	    	  	        display2();
-	  	    	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
-	  	    	  	        {
-	  	    	  	        	//linefollower zmodyfikowany o 2 dodatkowe czujniki
-	  	    	  	        	countdown();
-	  	    	  	        	while(1){
-	  	    	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
-	  	    	  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
-	  	    	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
-	  	    	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
-	  	    	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
+	  	   	  	        display_reset();
+	  	   	  	        display2();
+	  	   	  	        if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  	   	  	        {
+	  	   	  	        	//linefollower
+	  	   	  	        	countdown();
+	  	   	  	        	while(1){
+	  	   	  	        		detect_states[0] = HAL_GPIO_ReadPin(DETECT1_GPIO_Port, DETECT1_Pin);
+	  	   	  	        		detect_states[1] = HAL_GPIO_ReadPin(DETECT2_GPIO_Port, DETECT2_Pin);
+	  	   	  	        		detect_states[2] = HAL_GPIO_ReadPin(DETECT3_GPIO_Port, DETECT3_Pin);
+	  	   	  	        		detect_states[3] = HAL_GPIO_ReadPin(DETECT4_GPIO_Port, DETECT4_Pin);
+	  	   	  	        		detect_states[4] = HAL_GPIO_ReadPin(DETECT5_GPIO_Port, DETECT5_Pin);
 
-	  	    	  	        		//pomoc dla lini nalezy dodac nowe if i dodac 2 funkcje slightleft slightright(funkjce zwiazane z motor)
-	  	    	  	        		detect3L=HAL_GPIO_ReadPin(DETECT3L_GPIO_Port, DETECT3L_Pin);
-	  	    	  	        		detect3P=HAL_GPIO_ReadPin(DETECT3P_GPIO_Port, DETECT3P_Pin);
+	  	   	  	        		//pomoc dla lini nalezy dodac nowe if i dodac 2 funkcje slightleft slightright(funkjce zwiazane z motor)
+	  	   	  	        		detect3L=HAL_GPIO_ReadPin(DETECT3L_GPIO_Port, DETECT3L_Pin);
+	  	   	  	        		detect3P=HAL_GPIO_ReadPin(DETECT3P_GPIO_Port, DETECT3P_Pin);
 
 
-	  	    	  	        		if(detect_states[2]==0)
-	  	    	  	        		{
-	  	    	  	        			motor_forward(cycle);
-	  	    	  	        		}
-	  	    	  	        		else{
-	  	    	  	        			if(detect_states[1]==0 || detect_states[0]==0)
-	  	    	  	        			{
-	  	    	  	        				motor_left(cycle);
-	  	    	  	        				set_ang(900, 0);
-	  	    	  	        			}
-	  	    	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
-	  	    	  	        				motor_right(cycle);
-	  	    	  	        				set_ang(0, 0);
-	  	    	  	        			}
-	  	    	  	        			else{
-	  	    	  	        				motor_backward(cycle);
-	  	    	  	        				set_ang(450, 0);
-	  	    	  	        			}
-	  	    	  	        		}
-	  	    	  	        	}
-	  	    	  	        }
-	  	    	  	        break;
+	  	   	  	        		if(detect_states[2]==0)
+	  	   	  	        		{
+	  	   	  	        			motor_forward(cycle);
+	  	   	  	        		}
+	  	   	  	        		else{
+	  	   	  	        			if(detect_states[1]==0 || detect_states[0]==0)
+	  	   	  	        			{
+	  	   	  	        				motor_left(cycle);
+	  	   	  	        				set_ang(900, 0);
+	  	   	  	        			}
+	  	   	  	        			else if(detect_states[3]==0 || detect_states[4]==0){
+	  	   	  	        				motor_right(cycle);
+	  	   	  	        				set_ang(0, 0);
+	  	   	  	        			}
+	  	   	  	        			else if(detect3L==0 && (detect_states[1]==1)){
+	  	   	  	        				motor_slight_left(cycle);
+	  	   	  	        				set_ang(350,0);
+	  	   	  	        			}
+	  	   	  	        			else if(detect3P==0 && (detect_states[3]==1)){
+	  	   	  	        				motor_slight_right(cycle);
+	  	   	  	        				set_ang(550,0);
+	  	   	  	        			}
+	  	   	  	        			else{
+	  	   	  	        				motor_backward(cycle);
+	  	   	  	        				set_ang(450, 0);
+	  	   	  	        			}
+	  	   	  	        		}
+	  	   	  	        	}
+	  	   	  	        }
+	  	   	  	        break;
 	  	  case 3:
 	  	  	  	        display_reset();
 	  	  	  	        display3();
@@ -1016,7 +1024,22 @@ void countdown(void){
 	HAL_Delay(1000);
 	display_reset();
 }
+void motor_slight_left(uint32_t duty_cycle){
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, duty_cycle);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, (0.65*(duty_cycle*2/3)));
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, 0);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
 
+}
+
+void motor_slight_right(uint32_t duty_cycle){
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (0.65*(duty_cycle*2/3)));
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, duty_cycle);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+}
 
 
 
