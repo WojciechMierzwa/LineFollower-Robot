@@ -30,7 +30,7 @@ The SWIM project involves a Line Follower robot controlled by a custom applicati
 
 
 
-![Final Result]((https://github.com/WojciechMierzwa/LineFollower-Robot/tree/main/Photos/line_follower.jpg))
+![Final Result](https://github.com/WojciechMierzwa/LineFollower-Robot/blob/main/Photos/line_follower.jpg)
 
 [Watch Video](https://youtu.be/trq2xTyngCU)
 
